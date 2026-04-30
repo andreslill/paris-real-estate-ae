@@ -1,4 +1,4 @@
-rom __future__ import annotations
+from __future__ import annotations
 
 import pandas as pd
 
@@ -10,42 +10,43 @@ except ImportError:
     st = None
 
 
-TRANSACTION_PATH = "dvf_paris_2025_merged.csv"
-GREEN_PATH = "green_spaces_updates.csv"
-PLANNED_PATH = "Dataset/planned_green_spaces.csv"
+TRANSACTION_PATH = "data/dvf_paris_2025_aggregated.csv"
+GREEN_PATH = "data/green_spaces.csv"
+PLANNED_PATH = "data/planned_green_spaces.csv"
 
 
 def load_transaction_data(path: str = TRANSACTION_PATH) -> pd.DataFrame:
     df = pd.read_csv(path)
     df = df[df["price_per_sqm"].notna()].copy()
-    df = df[df["property_value"].notna()].copy()
-    df = df[(df["price_per_sqm"] > 0) & (df["property_value"] > 0)]
+    df = df[df["price_per_sqm"] > 0]
+    df = df[df["price_per_sqm"] <= df["price_per_sqm"].quantile(0.99)]
 
-    for col in ["price_per_sqm", "property_value"]:
-        df = df[df[col] <= df[col].quantile(0.99)]
-
+    df["arrondissement"] = pd.to_numeric(
+        df["postal_code"].astype(str).str[-2:],
+        errors="coerce",
+    )
     return df
 
 
 def load_green_data(path: str = GREEN_PATH) -> pd.DataFrame:
     green = pd.read_csv(path)
-    green["polygon_area"] = pd.to_numeric(green["polygon_area"], errors="coerce")
     green["arrondissement"] = pd.to_numeric(
-        green["postal_code"].astype(str).str[-2:], errors="coerce"
+        green["postal_code"].astype(str).str[-2:],
+        errors="coerce",
     )
     return green
 
 
 def load_planned_data(path: str = PLANNED_PATH) -> pd.DataFrame:
     planned = pd.read_csv(path)
-    planned["arrondissement"] = pd.to_numeric(planned["arrondissement"], errors="coerce")
-    planned["added_space_indicator"] = pd.to_numeric(
-        planned["added_space_indicator"], errors="coerce"
+    planned["arrondissement"] = pd.to_numeric(
+        planned["arrondissement"],
+        errors="coerce",
     )
     return planned
 
 
-def prepare_arrondissement_level_dataset() -> pd.DataFrame:
+def prepare_dataset() -> pd.DataFrame:
     tx = load_transaction_data()
     green = load_green_data()
     planned = load_planned_data()
@@ -54,118 +55,151 @@ def prepare_arrondissement_level_dataset() -> pd.DataFrame:
         tx.groupby("arrondissement", as_index=False)
         .agg(
             median_price_per_sqm=("price_per_sqm", "median"),
-            median_property_value=("property_value", "median"),
             transaction_count=("transaction_key", "count"),
-            avg_reference_rent=("avg_reference_rent", "median"),
         )
     )
 
     green_agg = (
         green.groupby("arrondissement", as_index=False)
-        .agg(
-            green_space_count=("green_space_id", "count"),
-            total_green_area_m2=("polygon_area", "sum"),
-            avg_green_area_m2=("polygon_area", "mean"),
-        )
+        .agg(existing_green_spaces=("green_space_id", "count"))
     )
 
     planned_agg = (
         planned.groupby("arrondissement", as_index=False)
-        .agg(
-            planned_projects=("project_name", "count"),
-            total_planned_green_m2=("added_space_indicator", "sum"),
-        )
+        .agg(planned_green_projects=("project_name", "count"))
     )
 
-    merged = tx_agg.merge(green_agg, on="arrondissement", how="left")
-    merged = merged.merge(planned_agg, on="arrondissement", how="left")
-    merged = merged.fillna(
+    df = tx_agg.merge(green_agg, on="arrondissement", how="left")
+    df = df.merge(planned_agg, on="arrondissement", how="left")
+    df = df.fillna(
         {
-            "green_space_count": 0,
-            "total_green_area_m2": 0,
-            "avg_green_area_m2": 0,
-            "planned_projects": 0,
-            "total_planned_green_m2": 0,
+            "existing_green_spaces": 0,
+            "planned_green_projects": 0,
         }
     )
 
-    merged["arrondissement_label"] = merged["arrondissement"].astype(int).astype(str)
-    return merged.sort_values("arrondissement")
+    df = df[df["arrondissement"].notna()].copy()
+    df["arrondissement_label"] = df["arrondissement"].astype(int).astype(str)
+    return df.sort_values("arrondissement")
 
 
-def chart_property_price_vs_green_context(df: pd.DataFrame):
-    fig = px.scatter(
+def chart_price_by_arrondissement(df: pd.DataFrame):
+    fig = px.bar(
         df,
-        x="total_green_area_m2",
+        x="arrondissement_label",
         y="median_price_per_sqm",
-        size="transaction_count",
-        color="planned_projects",
-        hover_data=[
-            "arrondissement_label",
-            "green_space_count",
-            "avg_reference_rent",
-            "total_planned_green_m2",
-        ],
-        title="Median Property Price vs Green Context by Arrondissement",
+        title="Median Price per sqm by Arrondissement",
         labels={
-            "total_green_area_m2": "Total existing green area (m²)",
-            "median_price_per_sqm": "Median price per sqm (EUR)",
-            "planned_projects": "Planned green projects",
-            "transaction_count": "Transactions",
             "arrondissement_label": "Arrondissement",
+            "median_price_per_sqm": "Median price per sqm (EUR)",
         },
-        color_continuous_scale="Greens",
+        color="median_price_per_sqm",
+        color_continuous_scale="Blues",
     )
-
-    fig.update_traces(
-        marker=dict(line=dict(width=1, color="white")),
-    )
-    fig.update_layout(height=650)
+    fig.update_xaxes(type="category")
     return fig
 
 
-def chart_green_space_count_vs_price(df: pd.DataFrame):
+def chart_green_space_by_arrondissement(df: pd.DataFrame):
+    long_df = df.melt(
+        id_vars="arrondissement_label",
+        value_vars=["existing_green_spaces", "planned_green_projects"],
+        var_name="type",
+        value_name="count",
+    )
+
+    long_df["type"] = long_df["type"].replace(
+        {
+            "existing_green_spaces": "Existing green spaces",
+            "planned_green_projects": "Planned green projects",
+        }
+    )
+
     fig = px.bar(
-        df.sort_values("median_price_per_sqm", ascending=False),
+        long_df,
         x="arrondissement_label",
-        y="green_space_count",
-        color="median_price_per_sqm",
-        title="Green Space Count by Arrondissement, Colored by Median Price per sqm",
+        y="count",
+        color="type",
+        barmode="group",
+        title="Existing vs Planned Green Spaces by Arrondissement",
         labels={
             "arrondissement_label": "Arrondissement",
-            "green_space_count": "Existing green spaces",
-            "median_price_per_sqm": "Median price per sqm (EUR)",
+            "count": "Count",
+            "type": "Type",
         },
-        color_continuous_scale="YlGnBu",
+        color_discrete_map={
+            "Existing green spaces": "#1B5E20",
+            "Planned green projects": "#A5D6A7",
+        },
     )
+    fig.update_xaxes(type="category")
+    return fig
+
+
+def chart_price_vs_green_space(df: pd.DataFrame):
+    fig = px.scatter(
+        df,
+        x="existing_green_spaces",
+        y="median_price_per_sqm",
+        size="transaction_count",
+        text="arrondissement_label",
+        title="Median Price per sqm vs Existing Green Space Count",
+        labels={
+            "existing_green_spaces": "Existing green space count",
+            "median_price_per_sqm": "Median price per sqm (EUR)",
+            "transaction_count": "Transactions",
+            "arrondissement_label": "Arrondissement",
+        },
+        color="median_price_per_sqm",
+        color_continuous_scale="Viridis",
+    )
+    fig.update_traces(textposition="top center")
     return fig
 
 
 def run_streamlit_app():
-    st.set_page_config(page_title="Green Context Visuals", layout="wide")
-    st.title("Property Price vs Green Context")
+    st.set_page_config(page_title="Paris Real Estate and Green Spaces", layout="wide")
+    st.title("Paris Real Estate and Green Spaces")
     st.caption(
-        "Example visuals linking arrondissement-level property prices with existing and planned green-space context."
+        "This dashboard compares property prices with existing and planned green spaces across Paris. "
+        "While the map shows where features are located, this dashboard highlights differences in prices "
+        "and green-space patterns across arrondissements."
     )
 
-    df = prepare_arrondissement_level_dataset()
+    df = prepare_dataset()
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Median sale price / sqm", f"{df['median_price_per_sqm'].median():,.0f} EUR")
+    c2.metric("Total existing green spaces", f"{int(df['existing_green_spaces'].sum()):,}")
+    c3.metric("Total planned projects", f"{int(df['planned_green_projects'].sum()):,}")
 
     st.markdown(
         """
-        This app works at arrondissement level, which is a safer level of comparison for green context.
-        It avoids claiming a direct transaction-to-park relationship and instead asks whether greener areas
-        also tend to have different price levels.
+        This dashboard complements the interactive map by focusing on three simple arrondissement-level comparisons:
+        1. the first chart shows which arrondissements are more expensive
+        2. the second chart compares existing and planned green spaces
+        3. the third chart compares price level and existing green-space count
         """
     )
 
-    fig1 = chart_property_price_vs_green_context(df)
-    fig2 = chart_green_space_count_vs_price(df)
+    st.plotly_chart(chart_price_by_arrondissement(df), width="stretch")
+    st.plotly_chart(chart_green_space_by_arrondissement(df), width="stretch")
+    st.caption(
+        "Dark green shows existing green spaces today. Light green shows planned green projects. "
+        "This helps compare current green areas with future investment by arrondissement."
+    )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.plotly_chart(fig1, use_container_width=True)
-    with col2:
-        st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(chart_price_vs_green_space(df), width="stretch")
+    st.caption(
+        "Each point is one arrondissement. This chart helps check whether arrondissements with more "
+        "existing green spaces also tend to have different median price levels."
+    )
+
+    st.info(
+        "Key takeaway: the most expensive arrondissements are not the ones with the highest number of green spaces "
+        "(for example, arrondissements 6 and 7 have the highest median prices). "
+        "This suggests that location and centrality are stronger price drivers, while green spaces provide useful additional context."
+    )
 
     st.dataframe(
         df[
@@ -173,13 +207,11 @@ def run_streamlit_app():
                 "arrondissement_label",
                 "median_price_per_sqm",
                 "transaction_count",
-                "green_space_count",
-                "total_green_area_m2",
-                "planned_projects",
-                "total_planned_green_m2",
+                "existing_green_spaces",
+                "planned_green_projects",
             ]
         ],
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -189,4 +221,3 @@ if __name__ == "__main__":
         print("Install with: pip install streamlit plotly pandas")
     else:
         run_streamlit_app()
-
