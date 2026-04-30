@@ -157,4 +157,4 @@ with r2c2:
     )
 
 st.markdown("---")
-st.caption("Paris Real Estate Analytics • Stefania Licciardi • Victoria Ford • Andrés Lill • May 2026")
+st.caption("Paris Real Estate • Stefania Licciardi • Victoria Ford • Andrés Lill • May 2026")
