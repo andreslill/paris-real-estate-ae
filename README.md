@@ -10,6 +10,7 @@ Analytics Engineering project analysing property values, rent control zones, and
 This project integrates four public datasets from the French government and the City of Paris into a unified analytics pipeline, ending in an interactive Streamlit dashboard.
 
 The datasets cover property transactions (DVF 2025), rent control thresholds (encadrement des loyers), existing green spaces, and planned urban greening projects across Paris's 20 arrondissements.
+
 ---
 
 ## Dashboard Pages
