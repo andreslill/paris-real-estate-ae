@@ -8,3 +8,4 @@ geopandas>=0.14.0
 shapely>=2.0.0
 branca>=0.7.0
 numpy>=1.24.0
+plotly>=5.0.0

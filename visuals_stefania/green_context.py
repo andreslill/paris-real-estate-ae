@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 import pandas as pd
+import plotly.express as px
+import streamlit as st
 
-try:
-    import plotly.express as px
-    import streamlit as st
-except ImportError:
-    px = None
-    st = None
 
 
 TRANSACTION_PATH = "data/dvf_paris_2025_aggregated.csv"
