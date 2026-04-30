@@ -1,3 +1,4 @@
-from visuals_stefania.green_context import run_streamlit_app
+from visuals_stefania.green_context import render_dashboard
 
-run_streamlit_app()
+render_dashboard()
+

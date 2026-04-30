@@ -157,13 +157,11 @@ def chart_price_vs_green_space(df: pd.DataFrame):
     return fig
 
 
-def run_streamlit_app():
-    st.set_page_config(page_title="Paris Real Estate and Green Spaces", layout="wide")
+def render_dashboard():
     st.title("Paris Real Estate and Green Spaces")
     st.caption(
         "This dashboard compares property prices with existing and planned green spaces across Paris. "
-        "While the map shows where features are located, this dashboard highlights differences in prices "
-        "and green-space patterns across arrondissements."
+        "Unlike the interactive map, it focuses on arrondissement-level comparisons."
     )
 
     df = prepare_dataset()
@@ -175,29 +173,31 @@ def run_streamlit_app():
 
     st.markdown(
         """
-        This dashboard complements the interactive map by focusing on three simple arrondissement-level comparisons:
+        This dashboard focuses on three simple arrondissement-level comparisons:
         1. the first chart shows which arrondissements are more expensive
         2. the second chart compares existing and planned green spaces
         3. the third chart compares price level and existing green-space count
         """
     )
 
-    st.plotly_chart(chart_price_by_arrondissement(df), width="stretch")
-    st.plotly_chart(chart_green_space_by_arrondissement(df), width="stretch")
-    st.caption(
-        "Dark green shows existing green spaces today. Light green shows planned green projects. "
-        "This helps compare current green areas with future investment by arrondissement."
-    )
+    st.plotly_chart(chart_price_by_arrondissement(df), use_container_width=True)
 
-    st.plotly_chart(chart_price_vs_green_space(df), width="stretch")
-    st.caption(
-        "Each point is one arrondissement. This chart helps check whether arrondissements with more "
-        "existing green spaces also tend to have different median price levels."
-    )
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(chart_green_space_by_arrondissement(df), use_container_width=True)
+        st.caption(
+            "Dark green shows existing green spaces today. Light green shows planned green projects, "
+            "so you can compare current green areas with future investment by arrondissement."
+        )
+    with col2:
+        st.plotly_chart(chart_price_vs_green_space(df), use_container_width=True)
+        st.caption(
+            "Each point is one arrondissement. This chart helps check whether arrondissements with more "
+            "existing green spaces also tend to have higher or lower median prices."
+        )
 
     st.info(
-        "Key takeaway: the most expensive arrondissements are not the ones with the highest number of green spaces "
-        "(for example, arrondissements 6 and 7 have the highest median prices). "
+        "Key takeaway: the most expensive arrondissements are not the ones with the highest number of green spaces. "
         "This suggests that location and centrality are stronger price drivers, while green spaces provide useful additional context."
     )
 
@@ -211,8 +211,13 @@ def run_streamlit_app():
                 "planned_green_projects",
             ]
         ],
-        width="stretch",
+        use_container_width=True,
     )
+
+
+def run_streamlit_app():
+    st.set_page_config(page_title="Paris Real Estate and Green Spaces", layout="wide")
+    render_dashboard()
 
 
 if __name__ == "__main__":
@@ -221,3 +226,4 @@ if __name__ == "__main__":
         print("Install with: pip install streamlit plotly pandas")
     else:
         run_streamlit_app()
+
