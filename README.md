@@ -2,7 +2,8 @@
 
 Analytics Engineering project analysing property values, rent control zones, and urban green spaces in Paris.
 
-**Team:** Stefania Licciardi, Victoria Ford, Andrés Lill,  
+**Team:** Stefania Licciardi, Victoria Ford, Andrés Lill
+
 ---
 
 ## Project Overview
