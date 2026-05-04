@@ -401,6 +401,7 @@ st.markdown(
 transaction_df = dvf_raw.copy()
 
 # Add a robust arrondissement column for filtering.
+# Prefer an existing arrondissement column. Otherwise derive it from postal_code if available.
 if "arrondissement" not in transaction_df.columns:
     if "postal_code" in transaction_df.columns:
         transaction_df["arrondissement"] = (
@@ -577,7 +578,7 @@ preview_cols = [
     ]
     if c in filtered_transactions.columns
 ]
-th
+
 if filtered_transactions.empty:
     st.info("No transactions found. Try changing the filters or using a broader search term.")
 else:
@@ -622,7 +623,7 @@ else:
         "Select a transaction",
         options=selection_df.index.tolist(),
         format_func=format_transaction_option,
-        help="",
+        help="The dropdown shows the first 500 filtered results. Use filters or search to narrow the list.",
     )
 
     selected_row = selection_df.loc[selected_idx]
@@ -675,7 +676,7 @@ else:
         """, unsafe_allow_html=True)
 
     with col_r:
-        st.markdown(f"**Rent Control: {room_label}**")
+        st.markdown(f"**Rent Control — {room_label}**")
         if rent_row is not None:
             quarter_name = selected_with_quarter.get("quarter_name", rent_row.get("quarter_name", "—"))
             ref = rent_row["reference_rent"]
