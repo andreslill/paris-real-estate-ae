@@ -396,7 +396,7 @@ st.markdown(
     "Then search within the filtered results or select a transaction from the dropdown."
 )
 
-# Work only with DVF records that are useful for user-facing selection.
+# Work only with DVF records that are useful for selection.
 # Keep flagged rows visible, but remove rows without a basic identifier/address.
 transaction_df = dvf_raw.copy()
 
@@ -417,7 +417,6 @@ if "arrondissement" not in transaction_df.columns:
         transaction_df["arrondissement"] = np.nan
 
 # Add date helper columns for filtering and stable ordering.
-# The UI uses a month filter instead of a technical sort dropdown.
 if "transaction_date" in transaction_df.columns:
     transaction_df["transaction_date_sort"] = pd.to_datetime(
         transaction_df["transaction_date"], errors="coerce"
@@ -425,7 +424,7 @@ if "transaction_date" in transaction_df.columns:
     transaction_df["transaction_month"] = transaction_df["transaction_date_sort"].dt.month
     transaction_df["transaction_month_label"] = transaction_df["transaction_date_sort"].dt.strftime("%B")
 
-# User-facing labels for internal data-quality flags.
+# labels for internal data-quality flags.
 quality_label_map = {
     "ok": "Clean records only",
     "price_per_sqm_high": "Flagged: unusually high price per m²",
@@ -436,9 +435,8 @@ quality_label_map = {
 def format_quality_label(flag):
     return quality_label_map.get(str(flag), str(flag).replace("_", " ").title())
 
-# Layout: guided filters first, text search second.
-# Property type is useful here because users usually do not know a transaction key.
-# It also prevents apartments, houses, outbuildings, and commercial records from being mixed in one long list.
+
+# Property type to prevent apartments, houses, outbuildings, and commercial records from being mixed in one long list.
 filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
 
 with filter_col1:
@@ -548,8 +546,6 @@ if search_query and len(search_query.strip()) >= 2:
         filtered_transactions = filtered_transactions[mask]
 
 # Sort the underlying filtered results before showing/selecting them.
-# Important: sorting inside st.dataframe only sorts the displayed preview, not the source dataframe
-# used for the dropdown. Therefore we sort here first. Newest transactions are shown first by default.
 filtered_transactions = filtered_transactions.copy()
 if "transaction_date_sort" in filtered_transactions.columns:
     filtered_transactions = filtered_transactions.sort_values(
@@ -562,7 +558,7 @@ st.caption(f"{len(filtered_transactions):,} matching transaction(s)")
 if "data_quality_flag" in filtered_transactions.columns:
     filtered_transactions["data_quality"] = filtered_transactions["data_quality_flag"].apply(format_quality_label)
 
-# Show a compact preview table so users do not have to know the exact transaction key.
+# Show preview table
 preview_cols = [
     c for c in [
         "transaction_date",
@@ -599,8 +595,7 @@ else:
     preview = filtered_transactions[preview_cols].head(preview_limit).copy()
     st.dataframe(preview, use_container_width=True, hide_index=True)
 
-    # Create readable dropdown labels from the sorted filtered result set.
-    # Keep the dropdown limited for performance; users can search/filter to narrow the list.
+    # Create dropdown labels
     selection_limit = min(500, len(filtered_transactions))
     selection_df = filtered_transactions.head(selection_limit).copy()
 
@@ -623,7 +618,7 @@ else:
 
     selected_row = selection_df.loc[selected_idx]
 
-    # Build spatial join to get quarter_id for the selected result.
+    # Spatial join to get quarter_id for the selected result.
     selected_with_quarter = selected_row.copy()
     if pd.notna(selected_row.get("lon")) and pd.notna(selected_row.get("lat")):
         selected_gdf = gpd.GeoDataFrame(
