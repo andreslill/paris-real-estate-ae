@@ -623,7 +623,7 @@ else:
         "Select a transaction",
         options=selection_df.index.tolist(),
         format_func=format_transaction_option,
-        help="The dropdown shows the first 500 filtered results. Use filters or search to narrow the list.",
+        help="",
     )
 
     selected_row = selection_df.loc[selected_idx]
