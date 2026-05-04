@@ -17,7 +17,6 @@ from data_loader import load_dvf, load_rent, load_green, load_planned
 
 st.set_page_config(
     page_title="Analysis",
-    page_icon="📊",
     layout="wide",
 )
 
@@ -417,6 +416,15 @@ if "arrondissement" not in transaction_df.columns:
     else:
         transaction_df["arrondissement"] = np.nan
 
+# Add date helper columns for filtering and stable ordering.
+# The UI uses a month filter instead of a technical sort dropdown.
+if "transaction_date" in transaction_df.columns:
+    transaction_df["transaction_date_sort"] = pd.to_datetime(
+        transaction_df["transaction_date"], errors="coerce"
+    )
+    transaction_df["transaction_month"] = transaction_df["transaction_date_sort"].dt.month
+    transaction_df["transaction_month_label"] = transaction_df["transaction_date_sort"].dt.strftime("%B")
+
 # User-facing labels for internal data-quality flags.
 quality_label_map = {
     "ok": "Clean records only",
@@ -431,7 +439,7 @@ def format_quality_label(flag):
 # Layout: guided filters first, text search second.
 # Property type is useful here because users usually do not know a transaction key.
 # It also prevents apartments, houses, outbuildings, and commercial records from being mixed in one long list.
-filter_col1, filter_col2, filter_col3 = st.columns(3)
+filter_col1, filter_col2, filter_col3, filter_col4 = st.columns(4)
 
 with filter_col1:
     arr_values = sorted(
@@ -470,6 +478,29 @@ with filter_col3:
         help="Clean records passed the basic quality checks. Flagged records are kept available for review but are excluded from the map layer.",
     )
 
+with filter_col4:
+    if "transaction_month" in transaction_df.columns:
+        month_lookup = (
+            transaction_df[["transaction_month", "transaction_month_label"]]
+            .dropna()
+            .drop_duplicates()
+            .sort_values("transaction_month")
+        )
+        month_options = ["All"] + month_lookup["transaction_month"].astype(int).tolist()
+        month_label_map = dict(
+            zip(month_lookup["transaction_month"].astype(int), month_lookup["transaction_month_label"])
+        )
+    else:
+        month_options = ["All"]
+        month_label_map = {}
+
+    selected_month = st.selectbox(
+        "Transaction month",
+        options=month_options,
+        format_func=lambda x: "All months" if x == "All" else month_label_map.get(int(x), str(x)),
+        help="Filter transactions to a specific month in 2025.",
+    )
+
 filtered_transactions = transaction_df.copy()
 
 if selected_arrondissement != "All":
@@ -485,6 +516,11 @@ if selected_property_type != "All" and "property_type" in filtered_transactions.
 if selected_quality != "All":
     filtered_transactions = filtered_transactions[
         filtered_transactions["data_quality_flag"] == selected_quality
+    ]
+
+if selected_month != "All" and "transaction_month" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions[
+        filtered_transactions["transaction_month"] == int(selected_month)
     ]
 
 search_query = st.text_input(
@@ -513,27 +549,12 @@ if search_query and len(search_query.strip()) >= 2:
 
 # Sort the underlying filtered results before showing/selecting them.
 # Important: sorting inside st.dataframe only sorts the displayed preview, not the source dataframe
-# used for the dropdown. Therefore we sort here first.
+# used for the dropdown. Therefore we sort here first. Newest transactions are shown first by default.
 filtered_transactions = filtered_transactions.copy()
-if "transaction_date" in filtered_transactions.columns:
-    filtered_transactions["transaction_date_sort"] = pd.to_datetime(
-        filtered_transactions["transaction_date"], errors="coerce"
+if "transaction_date_sort" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions.sort_values(
+        "transaction_date_sort", ascending=False, na_position="last"
     )
-
-sort_option = st.selectbox(
-    "Sort transactions",
-    options=["Newest first", "Oldest first", "Highest price per m²", "Lowest price per m²"],
-    index=0,
-)
-
-if sort_option == "Newest first" and "transaction_date_sort" in filtered_transactions.columns:
-    filtered_transactions = filtered_transactions.sort_values("transaction_date_sort", ascending=False)
-elif sort_option == "Oldest first" and "transaction_date_sort" in filtered_transactions.columns:
-    filtered_transactions = filtered_transactions.sort_values("transaction_date_sort", ascending=True)
-elif sort_option == "Highest price per m²" and "price_per_sqm" in filtered_transactions.columns:
-    filtered_transactions = filtered_transactions.sort_values("price_per_sqm", ascending=False, na_position="last")
-elif sort_option == "Lowest price per m²" and "price_per_sqm" in filtered_transactions.columns:
-    filtered_transactions = filtered_transactions.sort_values("price_per_sqm", ascending=True, na_position="last")
 
 st.caption(f"{len(filtered_transactions):,} matching transaction(s)")
 
@@ -561,14 +582,20 @@ preview_cols = [
 if filtered_transactions.empty:
     st.info("No transactions found. Try changing the filters or using a broader search term.")
 else:
-    preview_limit = st.slider(
+    # Keep the preview lightweight and user-friendly. For larger result sets, users
+    # should filter/search rather than loading thousands of rows into the preview.
+    row_options = [25, 50, 100, 250, 500, 1000]
+    row_options = [n for n in row_options if n <= len(filtered_transactions)]
+    if len(filtered_transactions) not in row_options and len(filtered_transactions) < 25:
+        row_options.append(len(filtered_transactions))
+
+    preview_limit = st.selectbox(
         "Rows shown in preview",
-        min_value=100,
-        max_value=min(5000, len(filtered_transactions)),
-        value=min(500, len(filtered_transactions)),
-        step=100,
-        help="The full filtered result count is shown above. Increase this to inspect more rows, or use search/filters to narrow the list.",
+        options=row_options,
+        index=min(2, len(row_options) - 1),  # Default to 100 rows when available
+        help="Choose how many rows to display. Use the filters or search box to narrow larger result sets.",
     )
+
     preview = filtered_transactions[preview_cols].head(preview_limit).copy()
     st.dataframe(preview, use_container_width=True, hide_index=True)
 
@@ -578,7 +605,7 @@ else:
     selection_df = filtered_transactions.head(selection_limit).copy()
     if len(filtered_transactions) > selection_limit:
         st.caption(
-            f"The dropdown shows the first {selection_limit:,} results after filtering and sorting. "
+            f"The dropdown shows the first {selection_limit:,} results after filtering. "
             "Use the search box or filters to narrow the list further."
         )
 
@@ -596,7 +623,7 @@ else:
         "Select a transaction",
         options=selection_df.index.tolist(),
         format_func=format_transaction_option,
-        help="The dropdown shows the first 500 filtered results after sorting. Use filters or search to narrow the list.",
+        help="The dropdown shows the first 500 filtered results. Use filters or search to narrow the list.",
     )
 
     selected_row = selection_df.loc[selected_idx]
