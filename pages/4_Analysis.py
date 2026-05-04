@@ -603,8 +603,6 @@ else:
     # Keep the dropdown limited for performance; users can search/filter to narrow the list.
     selection_limit = min(500, len(filtered_transactions))
     selection_df = filtered_transactions.head(selection_limit).copy()
-    if len(filtered_transactions) > selection_limit:
-     
 
     def format_transaction_option(idx):
         row = selection_df.loc[idx]
@@ -620,7 +618,7 @@ else:
         "Select a transaction",
         options=selection_df.index.tolist(),
         format_func=format_transaction_option,
-        help="The dropdown shows the first 500 filtered results. Use filters or search to narrow the list.",
+        help=f"The dropdown shows up to {selection_limit:,} filtered results. Use filters or search to narrow the list.",
     )
 
     selected_row = selection_df.loc[selected_idx]
