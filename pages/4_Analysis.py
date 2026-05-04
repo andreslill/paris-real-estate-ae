@@ -159,7 +159,8 @@ def build_map():
         location=[48.8566, 2.3522],
         zoom_start=12,
         tiles="CartoDB positron",
-        zoom_control=True
+        zoom_control=True,
+        scrollWheelZoom=False,  # Prevent accidental map zooming while scrolling the page
     )
 
     valid    = dvf_gdf[dvf_gdf["median_price"].notna()]
