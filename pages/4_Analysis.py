@@ -604,10 +604,7 @@ else:
     selection_limit = min(500, len(filtered_transactions))
     selection_df = filtered_transactions.head(selection_limit).copy()
     if len(filtered_transactions) > selection_limit:
-        st.caption(
-            f"The dropdown shows the first {selection_limit:,} results after filtering. "
-            "Use the search box or filters to narrow the list further."
-        )
+     
 
     def format_transaction_option(idx):
         row = selection_df.loc[idx]
@@ -676,7 +673,7 @@ else:
         """, unsafe_allow_html=True)
 
     with col_r:
-        st.markdown(f"**Rent Control — {room_label}**")
+        st.markdown(f"**Rent Control: {room_label}**")
         if rent_row is not None:
             quarter_name = selected_with_quarter.get("quarter_name", rent_row.get("quarter_name", "—"))
             ref = rent_row["reference_rent"]
