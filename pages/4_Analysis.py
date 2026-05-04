@@ -676,7 +676,7 @@ else:
         """, unsafe_allow_html=True)
 
     with col_r:
-        st.markdown(f"**Rent Control — {room_label}**")
+        st.markdown(f"**Rent Control: {room_label}**")
         if rent_row is not None:
             quarter_name = selected_with_quarter.get("quarter_name", rent_row.get("quarter_name", "—"))
             ref = rent_row["reference_rent"]
