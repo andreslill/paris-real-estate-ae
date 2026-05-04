@@ -401,7 +401,6 @@ st.markdown(
 transaction_df = dvf_raw.copy()
 
 # Add a robust arrondissement column for filtering.
-# Prefer an existing arrondissement column. Otherwise derive it from postal_code if available.
 if "arrondissement" not in transaction_df.columns:
     if "postal_code" in transaction_df.columns:
         transaction_df["arrondissement"] = (
@@ -578,7 +577,7 @@ preview_cols = [
     ]
     if c in filtered_transactions.columns
 ]
-
+th
 if filtered_transactions.empty:
     st.info("No transactions found. Try changing the filters or using a broader search term.")
 else:
