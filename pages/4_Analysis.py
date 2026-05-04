@@ -160,7 +160,7 @@ def build_map():
         zoom_start=12,
         tiles="CartoDB positron",
         zoom_control=True,
-        scrollWheelZoom=False,  # Prevent accidental map zooming while scrolling the page
+        scrollWheelZoom=False
     )
 
     valid    = dvf_gdf[dvf_gdf["median_price"].notna()]
@@ -429,7 +429,9 @@ def format_quality_label(flag):
     return quality_label_map.get(str(flag), str(flag).replace("_", " ").title())
 
 # Layout: guided filters first, text search second.
-filter_col1, filter_col2 = st.columns(2)
+# Property type is useful here because users usually do not know a transaction key.
+# It also prevents apartments, houses, outbuildings, and commercial records from being mixed in one long list.
+filter_col1, filter_col2, filter_col3 = st.columns(3)
 
 with filter_col1:
     arr_values = sorted(
@@ -442,6 +444,17 @@ with filter_col1:
     )
 
 with filter_col2:
+    property_values = sorted(
+        transaction_df["property_type"].dropna().astype(str).unique().tolist()
+    ) if "property_type" in transaction_df.columns else []
+    selected_property_type = st.selectbox(
+        "Property type",
+        options=["All"] + property_values,
+        format_func=lambda x: "All property types" if x == "All" else x,
+        help="Use this to focus the transaction list on apartments, houses, outbuildings, or commercial records.",
+    )
+
+with filter_col3:
     quality_values = [
         flag for flag in ["ok", "price_per_sqm_high", "surface_too_small", "high_room_count"]
         if flag in transaction_df["data_quality_flag"].dropna().unique().tolist()
@@ -462,6 +475,11 @@ filtered_transactions = transaction_df.copy()
 if selected_arrondissement != "All":
     filtered_transactions = filtered_transactions[
         filtered_transactions["arrondissement"] == int(selected_arrondissement)
+    ]
+
+if selected_property_type != "All" and "property_type" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions[
+        filtered_transactions["property_type"].astype(str) == selected_property_type
     ]
 
 if selected_quality != "All":
@@ -493,10 +511,33 @@ if search_query and len(search_query.strip()) >= 2:
             mask = mask | filtered_transactions[col].fillna("").astype(str).str.upper().str.contains(q, regex=False)
         filtered_transactions = filtered_transactions[mask]
 
+# Sort the underlying filtered results before showing/selecting them.
+# Important: sorting inside st.dataframe only sorts the displayed preview, not the source dataframe
+# used for the dropdown. Therefore we sort here first.
+filtered_transactions = filtered_transactions.copy()
+if "transaction_date" in filtered_transactions.columns:
+    filtered_transactions["transaction_date_sort"] = pd.to_datetime(
+        filtered_transactions["transaction_date"], errors="coerce"
+    )
+
+sort_option = st.selectbox(
+    "Sort transactions",
+    options=["Newest first", "Oldest first", "Highest price per m²", "Lowest price per m²"],
+    index=0,
+)
+
+if sort_option == "Newest first" and "transaction_date_sort" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions.sort_values("transaction_date_sort", ascending=False)
+elif sort_option == "Oldest first" and "transaction_date_sort" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions.sort_values("transaction_date_sort", ascending=True)
+elif sort_option == "Highest price per m²" and "price_per_sqm" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions.sort_values("price_per_sqm", ascending=False, na_position="last")
+elif sort_option == "Lowest price per m²" and "price_per_sqm" in filtered_transactions.columns:
+    filtered_transactions = filtered_transactions.sort_values("price_per_sqm", ascending=True, na_position="last")
+
 st.caption(f"{len(filtered_transactions):,} matching transaction(s)")
 
 # Add a cleaner user-facing quality label for tables and details.
-filtered_transactions = filtered_transactions.copy()
 if "data_quality_flag" in filtered_transactions.columns:
     filtered_transactions["data_quality"] = filtered_transactions["data_quality_flag"].apply(format_quality_label)
 
@@ -520,12 +561,26 @@ preview_cols = [
 if filtered_transactions.empty:
     st.info("No transactions found. Try changing the filters or using a broader search term.")
 else:
-    preview = filtered_transactions[preview_cols].head(100).copy()
+    preview_limit = st.slider(
+        "Rows shown in preview",
+        min_value=100,
+        max_value=min(5000, len(filtered_transactions)),
+        value=min(500, len(filtered_transactions)),
+        step=100,
+        help="The full filtered result count is shown above. Increase this to inspect more rows, or use search/filters to narrow the list.",
+    )
+    preview = filtered_transactions[preview_cols].head(preview_limit).copy()
     st.dataframe(preview, use_container_width=True, hide_index=True)
 
-    # Create readable dropdown labels from the filtered result set.
-    # Limit to 100 options for performance and usability.
-    selection_df = filtered_transactions.head(100).copy()
+    # Create readable dropdown labels from the sorted filtered result set.
+    # Keep the dropdown limited for performance; users can search/filter to narrow the list.
+    selection_limit = min(500, len(filtered_transactions))
+    selection_df = filtered_transactions.head(selection_limit).copy()
+    if len(filtered_transactions) > selection_limit:
+        st.caption(
+            f"The dropdown shows the first {selection_limit:,} results after filtering and sorting. "
+            "Use the search box or filters to narrow the list further."
+        )
 
     def format_transaction_option(idx):
         row = selection_df.loc[idx]
@@ -541,7 +596,7 @@ else:
         "Select a transaction",
         options=selection_df.index.tolist(),
         format_func=format_transaction_option,
-        help="The dropdown shows the first 100 filtered results. Use filters or search to narrow the list.",
+        help="The dropdown shows the first 500 filtered results after sorting. Use filters or search to narrow the list.",
     )
 
     selected_row = selection_df.loc[selected_idx]
