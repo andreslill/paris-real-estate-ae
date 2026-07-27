@@ -135,7 +135,12 @@ paris-real-estate-ae/
 
 ## Tech Stack
 
-Python, Pandas, Streamlit, Folium, GeoPandas, Snowflake, SQL
+## Tech Stack
+
+**Data Warehouse & Modeling:** Snowflake, SQL, dimensional modeling (3NF → star schema)
+**Data Engineering:** ELT pipeline (staging → raw tables → star schema)
+**Analysis & Visualization:** Python (Pandas, GeoPandas), geospatial analysis (Folium)
+**Dashboard:** Streamlit
 
 ---
 
