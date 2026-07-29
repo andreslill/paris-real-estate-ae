@@ -139,7 +139,7 @@ The `notebooks/` folder contains the extract-and-transform stage that produces t
 | 07 | `dvf_one_row_per_transaction` | Aggregate to one row per transaction | `dvf_paris_2025_aggregated.csv` |
 | 08 | `create_dim_date` | Build the date dimension for the star schema | `dim_date.csv` |
 
-The DVF source file is downloaded in notebook 04 (originally published on data.gouv.fr). Joining and modeling of these sources happens in Snowflake — see [Building the Data Warehouse](#building-the-data-warehouse).
+The DVF source file is downloaded in notebook 04 (originally published on data.gouv.fr). Joining and modeling of these sources happens in Snowflake (See [Building the Data Warehouse](#building-the-data-warehouse)).
 
 ---
 
