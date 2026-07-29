@@ -1,6 +1,6 @@
 # Paris Real Estate Analytics Engineering Project
 
-Analytics Engineering project analysing property values, rent control zones, and urban green spaces in Paris — from raw public data through to an interactive dashboard.
+Analytics Engineering project analysing property values, rent control zones, and urban green spaces in Paris: From raw public data through to an interactive dashboard.
 
 **Live dashboard:** https://paris-real-estate-ae.streamlit.app/
 
