@@ -149,17 +149,19 @@ Once the CSVs are in `data/`, the Snowflake pipeline loads and models them. Run 
 
 **Stage 1 — load raw data** (`sql/load_tables/`)
 
-1. `01_create_stage.sql` – create the internal stage
-2. `02_define_file_types.sql` – define the CSV file format
-3. `03_create_tables.sql` – create the raw tables
-4. `04_populate_tables.sql` – load the CSVs into the raw tables
+1. `1_create_stages.sql` – create the internal stage
+2. `2_define_file_types.sql` – define the CSV file format
+3. `3_create_tables.sql` – create the raw (PUBLIC) tables
+4. `4_populate_tables.sql` – load the CSVs from the stage into the raw tables
 
 **Stage 2 — build the star schema** (`sql/star_schema/`)
 
-1. `01_create_star_schema.sql` – create dimension and fact tables
-2. `02_check_tables.sql` – validate the loaded tables
-3. `03_populate_star_schema.sql` – populate the star schema
-4. `04_analysis_queries.sql` – example analytical queries
+1. `1_create_star_schema.sql` – create the dimension and fact tables
+2. `2_populate_star_schema.sql` – populate the dimensions and the fact table
+3. `3_check_tables.sql` – list the created tables
+4. `4_analysis_queries.sql` – analytical queries answering the key questions
+
+> **Known limitation:** `FACT_TRANSACTION.quarter_id` is not yet populated. Assigning each property to its rent-control quarter requires a point-in-polygon spatial join; `DIM_QUARTER` is loaded and ready for that link as a next step.
 
 Snowflake connection settings (for running the pipeline against your own account) live in `.streamlit/secrets.toml`, which is git-ignored:
 
@@ -170,8 +172,8 @@ user      = "your_user"
 password  = "your_password"
 role      = "your_role"
 warehouse = "your_warehouse"
-database  = "PARIS_REAL_ESTATE"
-schema    = "PUBLIC"
+database  = "PARIS_REALESTATE"
+schema    = "STAR"
 ```
 
 ---
@@ -206,7 +208,8 @@ paris-real-estate-ae/
 │   ├── dvf_paris_2025_aggregated.csv
 │   ├── api_rent_control_2025.csv
 │   ├── green_spaces.csv
-│   └── planned_green_spaces.csv
+│   ├── planned_green_spaces.csv
+│   └── dim_date.csv
 │
 ├── notebooks/
 │   ├── 01_fetch_rent_control.ipynb
@@ -230,16 +233,16 @@ paris-real-estate-ae/
 │
 ├── sql/
 │   ├── load_tables/
-│   │   ├── 01_create_stage.sql
-│   │   ├── 02_define_file_types.sql
-│   │   ├── 03_create_tables.sql
-│   │   └── 04_populate_tables.sql
+│   │   ├── 1_create_stages.sql
+│   │   ├── 2_define_file_types.sql
+│   │   ├── 3_create_tables.sql
+│   │   └── 4_populate_tables.sql
 │   │
 │   └── star_schema/
-│       ├── 01_create_star_schema.sql
-│       ├── 02_check_tables.sql
-│       ├── 03_populate_star_schema.sql
-│       └── 04_analysis_queries.sql
+│       ├── 1_create_star_schema.sql
+│       ├── 2_populate_star_schema.sql
+│       ├── 3_check_tables.sql
+│       └── 4_analysis_queries.sql
 │
 ├── visualizations/
 │   └── green_context.py
@@ -255,3 +258,6 @@ paris-real-estate-ae/
 
 ---
 
+## License
+
+This project is released under the MIT License — see the [LICENSE](LICENSE) file for details.
