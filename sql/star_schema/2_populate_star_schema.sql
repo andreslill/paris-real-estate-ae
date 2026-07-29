@@ -150,6 +150,9 @@ WITH joined AS (
         TO_NUMBER(TO_CHAR(d.TRANSACTION_DATE, 'YYYYMMDD')) AS date_id,
         d.POSTAL_CODE AS arrondissement_id,
         l.LOCATION_ID AS location_id,
+        -- KNOWN LIMITATION: linking a property to its rent-control quarter
+        -- requires a point-in-polygon spatial join, which is not yet implemented.
+        -- DIM_QUARTER is loaded but not yet connected to the fact table.
         NULL AS quarter_id,
         pt.PROPERTY_TYPE_ID,
         d.PROPERTY_VALUE, d.LOT_COUNT, d.SURFACE_AREA,
@@ -161,3 +164,9 @@ WITH joined AS (
     LEFT JOIN PARIS_REALESTATE.STAR.DIM_PROPERTY_TYPE pt
         ON pt.PROPERTY_TYPE = d.PROPERTY_TYPE
 )
+SELECT * FROM joined;
+
+
+
+
+

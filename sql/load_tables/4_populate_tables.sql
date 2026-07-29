@@ -1,0 +1,35 @@
+-- Indicate database and schema 
+USE DATABASE PARIS_REALESTATE;
+USE SCHEMA PUBLIC;
+
+---------------------
+-- Populate tables 
+---------------------
+
+-- DVF_AGGREGATED
+COPY INTO dvf_aggregated
+FROM @PARIS_REALESTATE.STAR.PROJECT_STAGE/dvf_paris_2025_aggregated.csv
+FILE_FORMAT=CLASSIC_CSV;
+
+-- GREEN_SPACES
+COPY INTO green_spaces
+FROM @PARIS_REALESTATE.STAR.PROJECT_STAGE/green_spaces.csv
+FILE_FORMAT=CLASSIC_CSV;
+
+-- PLANNED_GREEN_SPACES
+COPY INTO planned_green_spaces
+FROM @PARIS_REALESTATE.STAR.PROJECT_STAGE/planned_green_spaces.csv
+FILE_FORMAT=CLASSIC_CSV;
+
+-- DATE_TABLE
+COPY INTO date_table
+FROM @PARIS_REALESTATE.STAR.PROJECT_STAGE/dim_date.csv
+FILE_FORMAT=CLASSIC_CSV;
+
+-- RENT_CONTROL
+COPY INTO rent_control
+FROM @PARIS_REALESTATE.STAR.PROJECT_STAGE/api_rent_control_2025.csv
+FILE_FORMAT=CLASSIC_CSV;
+
+
+SELECT * FROM green_spaces;
