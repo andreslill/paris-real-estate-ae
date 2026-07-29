@@ -31,7 +31,7 @@ This project integrates four public datasets from the French government and the 
 
 The datasets cover property transactions (DVF 2025), rent control thresholds (encadrement des loyers), existing green spaces, and planned urban greening projects across Paris's 20 arrondissements.
 
-**Pipeline at a glance:** `notebooks/` (extract & transform) → `data/` (clean CSVs) → `sql/` (load & star-schema modeling in Snowflake) → Streamlit dashboard.
+**Pipeline at a glance:** `notebooks/` (extract & transform) → `data/` (clean CSVs). From there the flow branches: the **Streamlit dashboard** reads the CSVs directly, while the `sql/` scripts load the same CSVs into a **Snowflake star schema** for dimensional modeling and analytical queries.
 
 ---
 
@@ -251,13 +251,9 @@ paris-real-estate-ae/
 ├── data_loader.py
 ├── README.md
 ├── requirements.txt
-├── LICENSE
 ├── .gitignore
 └── .gitattributes
 ```
 
 ---
 
-## License
-
-This project is released under the MIT License — see the [LICENSE](LICENSE) file for details.
