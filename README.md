@@ -138,9 +138,8 @@ The `notebooks/` folder contains the extract-and-transform stage that produces t
 | 06 | `merge_coordinates` | Merge coordinates into the DVF dataset | `dvf_paris_2024_2025_with_coordinates.csv` |
 | 07 | `dvf_one_row_per_transaction` | Aggregate to one row per transaction | `dvf_paris_2025_aggregated.csv` |
 | 08 | `create_dim_date` | Build the date dimension for the star schema | `dim_date.csv` |
-| 09 | `merge_all_sources` | Join DVF, rent control and green spaces | `dvf_paris_2025_merged.csv` |
 
-The DVF source file is downloaded in notebook 04 (originally published on data.gouv.fr).
+The DVF source file is downloaded in notebook 04 (originally published on data.gouv.fr). Joining and modeling of these sources happens in Snowflake — see [Building the Data Warehouse](#building-the-data-warehouse).
 
 ---
 
@@ -183,7 +182,10 @@ schema    = "PUBLIC"
 - **Data Sources** – Dataset overview and limitations
 - **Data Modeling** – 3NF to star schema design
 - **ETL Pipeline** – Data ingestion and Snowflake loading
-- **Analysis** – Interactive geospatial dashboard
+- **Rent Control** – Rent-control thresholds (encadrement des loyers) by quartier
+- **Green Spaces** – Existing and planned urban green spaces
+- **Integrated Map** – Interactive geospatial dashboard combining property prices, rent control, and green spaces
+- **Transaction Search** – Searchable view of individual property transactions
 - **Conclusion** – Summary of findings and takeaways
 
 ---
@@ -214,15 +216,17 @@ paris-real-estate-ae/
 │   ├── 05_fetch_coordinates.ipynb
 │   ├── 06_merge_coordinates.ipynb
 │   ├── 07_dvf_one_row_per_transaction.ipynb
-│   ├── 08_create_dim_date.ipynb
-│   └── 09_merge_all_sources.ipynb
+│   └── 08_create_dim_date.ipynb
 │
 ├── pages/
 │   ├── 1_Data_Sources.py
 │   ├── 2_Data_Modeling.py
 │   ├── 3_ETL_Pipeline.py
-│   ├── 4_Analysis.py
-│   └── 5_Conclusion.py
+│   ├── 4_Rent_Control.py
+│   ├── 5_Green_Spaces.py
+│   ├── 6_Integrated_Map.py
+│   ├── 7_Transaction_Search.py
+│   └── 8_Conclusion.py
 │
 ├── sql/
 │   ├── load_tables/
