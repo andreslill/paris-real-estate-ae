@@ -5,7 +5,7 @@ Analytics Engineering project analysing property values, rent control zones, and
 **Live dashboard:** https://paris-real-estate-ae.streamlit.app/
 
 **Team:** Andrés Lill, Stefania Licciardi, Victoria Ford
-Developed as part of the Liora Analytics Engineering Programme (in cooperation with the Université Paris 1 Panthéon-Sorbonne).
+Developed as part of the Liora Analytics Engineering Programme.
 
 ---
 
