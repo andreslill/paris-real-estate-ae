@@ -147,14 +147,14 @@ The DVF source file is downloaded in notebook 04 (originally published on data.g
 
 Once the CSVs are in `data/`, the Snowflake pipeline loads and models them. Run the SQL scripts in order:
 
-**Stage 1 — load raw data** (`sql/load_tables/`)
+**Stage 1: Load raw data** (`sql/load_tables/`)
 
 1. `1_create_stages.sql` – create the internal stage
 2. `2_define_file_types.sql` – define the CSV file format
 3. `3_create_tables.sql` – create the raw (PUBLIC) tables
 4. `4_populate_tables.sql` – load the CSVs from the stage into the raw tables
 
-**Stage 2 — build the star schema** (`sql/star_schema/`)
+**Stage 2: Build the star schema** (`sql/star_schema/`)
 
 1. `1_create_star_schema.sql` – create the dimension and fact tables
 2. `2_populate_star_schema.sql` – populate the dimensions and the fact table
