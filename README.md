@@ -255,6 +255,3 @@ paris-real-estate-ae/
 
 ---
 
-## License
-
-This project is released under the MIT License — see the [LICENSE](LICENSE) file for details.
