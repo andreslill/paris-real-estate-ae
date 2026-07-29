@@ -180,15 +180,15 @@ schema    = "STAR"
 
 ## Dashboard Pages
 
-- **Home** – Project context, research questions, and KPIs
-- **Data Sources** – Dataset overview and limitations
-- **Data Modeling** – 3NF to star schema design
-- **ETL Pipeline** – Data ingestion and Snowflake loading
-- **Rent Control** – Rent-control thresholds (encadrement des loyers) by quartier
-- **Green Spaces** – Existing and planned urban green spaces
-- **Integrated Map** – Interactive geospatial dashboard combining property prices, rent control, and green spaces
-- **Transaction Search** – Searchable view of individual property transactions
-- **Conclusion** – Summary of findings and takeaways
+- **Home**: Project context, research questions, and KPIs
+- **Data Sources**: Dataset overview and limitations
+- **Data Modeling**: 3NF to star schema design
+- **ETL Pipeline**: Data ingestion and Snowflake loading
+- **Rent Control**: Rent-control thresholds (encadrement des loyers) by quartier
+- **Green Spaces**: Existing and planned urban green spaces
+- **Integrated Map**: Interactive geospatial dashboard combining property prices, rent control, and green spaces
+- **Transaction Search**: Searchable view of individual property transactions
+- **Conclusion**: Summary of findings and takeaways
 
 ---
 
