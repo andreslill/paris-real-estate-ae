@@ -149,17 +149,17 @@ Once the CSVs are in `data/`, the Snowflake pipeline loads and models them. Run 
 
 **Stage 1: Load raw data** (`sql/load_tables/`)
 
-1. `1_create_stages.sql` – create the internal stage
-2. `2_define_file_types.sql` – define the CSV file format
-3. `3_create_tables.sql` – create the raw (PUBLIC) tables
-4. `4_populate_tables.sql` – load the CSVs from the stage into the raw tables
+1. `1_create_stages.sql`: Create the internal stage
+2. `2_define_file_types.sql`: Define the CSV file format
+3. `3_create_tables.sql`: Create the raw (PUBLIC) tables
+4. `4_populate_tables.sql`: Load the CSVs from the stage into the raw tables
 
 **Stage 2: Build the star schema** (`sql/star_schema/`)
 
-1. `1_create_star_schema.sql` – create the dimension and fact tables
-2. `2_populate_star_schema.sql` – populate the dimensions and the fact table
-3. `3_check_tables.sql` – list the created tables
-4. `4_analysis_queries.sql` – analytical queries answering the key questions
+1. `1_create_star_schema.sql`: Create the dimension and fact tables
+2. `2_populate_star_schema.sql`: Populate the dimensions and the fact table
+3. `3_check_tables.sql`: List the created tables
+4. `4_analysis_queries.sql`: Analytical queries answering the key questions
 
 > **Known limitation:** `FACT_TRANSACTION.quarter_id` is not yet populated. Assigning each property to its rent-control quarter requires a point-in-polygon spatial join; `DIM_QUARTER` is loaded and ready for that link as a next step.
 
