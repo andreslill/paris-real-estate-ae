@@ -1,17 +1,8 @@
+/*/ Indicating database and schema to use /*/
 USE DATABASE PARIS_REALESTATE;
-USE SCHEMA PUBLIC;
+USE SCHEMA STAR;
 
-CREATE FILE FORMAT CLASSIC_CSV;
-ALTER FILE FORMAT PARIS_REALESTATE.PUBLIC.CLASSIC_CSV  
-SET COMPRESSION = 'AUTO' 
-RECORD_DELIMITER = '\n'
-FIELD_DELIMITER = ',' 
-SKIP_HEADER = 1 
-DATE_FORMAT = 'AUTO' 
-TIMESTAMP_FORMAT = 'AUTO'
-FIELD_OPTIONALLY_ENCLOSED_BY = '"'
-TRIM_SPACE = FALSE
-ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE 
-ESCAPE = 'NONE' 
-ESCAPE_UNENCLOSED_FIELD = '\134' 
-NULL_IF = ('\\N');
+/*/ Creating the staging area for our pre-processed csv files /*/
+CREATE STAGE IF NOT EXISTS project_stage 
+	DIRECTORY = ( ENABLE = true ) 
+	COMMENT = 'Staging area for the preprocessed csv files of Paris real estate data';
