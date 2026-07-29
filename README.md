@@ -251,9 +251,13 @@ paris-real-estate-ae/
 ├── data_loader.py
 ├── README.md
 ├── requirements.txt
+├── LICENSE
 ├── .gitignore
 └── .gitattributes
 ```
 
 ---
 
+## License
+
+This project is released under the MIT License — see the [LICENSE](LICENSE) file for details.
